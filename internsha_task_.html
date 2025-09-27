@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentTracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f7fa; }
+    header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+    nav { display: flex; justify-content: center; gap: 15px; background: #34495e; padding: 10px; }
+    nav button { background: #1abc9c; border: none; padding: 8px 16px; color: white; cursor: pointer; border-radius: 5px; }
+    nav button:hover { background: #16a085; }
+    .container { padding: 20px; }
+    .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #ecf0f1; }
+    form { margin-top: 15px; display: grid; gap: 10px; max-width: 400px; }
+    input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+    .card h2 { margin: 0; font-size: 24px; }
+    .card p { margin: 5px 0 0; font-size: 14px; color: #555; }
+    button.delete { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    button.delete:hover { background: #c0392b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📘 StudentTracker</h1>
+  </header>
+
+  <nav>
+    <button onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('students')">Students</button>
+    <button onclick="showPage('teachers')">Teachers</button>
+    <button onclick="showPage('classes')">Classes</button>
+    <button onclick="showPage('parents')">Parents</button>
+    <button onclick="showPage('assessments')">Assessments</button>
+  </nav>
+
+  <div class="container">
+
+    <!-- Dashboard -->
+    <section id="dashboard">
+      <h2>Dashboard Summary</h2>
+      <div class="card-grid">
+        <div class="card"><h2 id="countSchools">0</h2><p>Schools</p></div>
+        <div class="card"><h2 id="countStudents">0</h2><p>Students</p></div>
+        <div class="card"><h2 id="countTeachers">0</h2><p>Teachers</p></div>
+        <div class="card"><h2 id="countClasses">0</h2><p>Classes</p></div>
+      </div>
+    </section>
+
+    <!-- Students -->
+    <section id="students" class="hidden">
+      <h2>Students</h2>
+      <form onsubmit="addStudent(event)">
+        <input placeholder="First Name" id="sFirst" required />
+        <input placeholder="Last Name" id="sLast" />
+        <input type="date" id="sDob" />
+        <select id="sGender">
+          <option value="">Gender</option>
+          <option>M</option>
+          <option>F</option>
+        </select>
+        <input placeholder="Admission No." id="sAdm" required />
+        <button type="submit">Add Student</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Admission</th><th>Action</th></tr></thead>
+        <tbody id="studentTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Teachers -->
+    <section id="teachers" class="hidden">
+      <h2>Teachers</h2>
+      <form onsubmit="addTeacher(event)">
+        <input placeholder="First Name" id="tFirst" required />
+        <input placeholder="Last Name" id="tLast" />
+        <input placeholder="Email" id="tEmail" />
+        <button type="submit">Add Teacher</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead>
+        <tbody id="teacherTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Classes -->
+    <section id="classes" class="hidden">
+      <h2>Classes</h2>
+      <form onsubmit="addClass(event)">
+        <input placeholder="Class Name (e.g. Grade 6 - A)" id="cName" required />
+        <button type="submit">Add Class</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th></tr></thead>
+        <tbody id="classTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Parents -->
+    <section id="parents" class="hidden">
+      <h2>Parents</h2>
+      <form onsubmit="addParent(event)">
+        <input placeholder="First Name" id="pFirst" required />
+        <input placeholder="Last Name" id="pLast" />
+        <input placeholder="Phone" id="pPhone" />
+        <button type="submit">Add Parent</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Phone</th></tr></thead>
+        <tbody id="parentTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Assessments -->
+    <section id="assessments" class="hidden">
+      <h2>Assessments</h2>
+      <form onsubmit="addAssessment(event)">
+        <input placeholder="Student ID" id="aStudent" required />
+        <input placeholder="Subject" id="aSubject" required />
+        <input type="number" placeholder="Score" id="aScore" required />
+        <input type="number" placeholder="Max Score" id="aMax" required />
+        <button type="submit">Add Assessment</button>
+      </form>
+      <table>
+        <thead><tr><th>ID</th><th>Student</th><th>Subject</th><th>Score</th></tr></thead>
+        <tbody id="assessmentTable"></tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script>
+    // Simple LocalStorage DB
+    const db = {
+      students: JSON.parse(localStorage.getItem('students')||'[]'),
+      teachers: JSON.parse(localStorage.getItem('teachers')||'[]'),
+      classes: JSON.parse(localStorage.getItem('classes')||'[]'),
+      parents: JSON.parse(localStorage.getItem('parents')||'[]'),
+      assessments: JSON.parse(localStorage.getItem('assessments')||'[]'),
+      schools: [{id:1,name:"Green Valley School"}]
+    };
+
+    // Navigation
+    function showPage(id){
+      document.querySelectorAll("section").forEach(sec=>sec.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+      updateTables();
+      updateDashboard();
+    }
+
+    // Save helper
+    function save(){ 
+      localStorage.setItem('students', JSON.stringify(db.students));
+      localStorage.setItem('teachers', JSON.stringify(db.teachers));
+      localStorage.setItem('classes', JSON.stringify(db.classes));
+      localStorage.setItem('parents', JSON.stringify(db.parents));
+      localStorage.setItem('assessments', JSON.stringify(db.assessments));
+    }
+
+    // Add functions
+    function addStudent(e){ e.preventDefault();
+      const s = { id: db.students.length+1, first: sFirst.value, last: sLast.value, dob: sDob.value, gender: sGender.value, adm: sAdm.value };
+      db.students.push(s); save(); updateTables(); e.target.reset();
+    }
+
+    function addTeacher(e){ e.preventDefault();
+      const t = { id: db.teachers.length+1, first: tFirst.value, last: tLast.value, email: tEmail.value };
+      db.teachers.push(t); save(); updateTables(); e.target.reset();
+    }
+
+    function addClass(e){ e.preventDefault();
+      const c = { id: db.classes.length+1, name: cName.value };
+      db.classes.push(c); save(); updateTables(); e.target.reset();
+    }
+
+    function addParent(e){ e.preventDefault();
+      const p = { id: db.parents.length+1, first: pFirst.value, last: pLast.value, phone: pPhone.value };
+      db.parents.push(p); save(); updateTables(); e.target.reset();
+    }
+
+    function addAssessment(e){ e.preventDefault();
+      const a = { id: db.assessments.length+1, student: aStudent.value, subject: aSubject.value, score: aScore.value, max: aMax.value };
+      db.assessments.push(a); save(); updateTables(); e.target.reset();
+    }
+
+    // Delete student
+    function deleteStudent(id){
+      db.students = db.students.filter(s => s.id !== id);
+      save(); updateTables(); updateDashboard();
+    }
+
+    // Update UI
+    function updateTables(){
+      studentTable.innerHTML = db.students.map(s=>`
+        <tr>
+          <td>${s.id}</td>
+          <td>${s.first} ${s.last}</td>
+          <td>${s.gender}</td>
+          <td>${s.adm}</td>
+          <td><button class="delete" onclick="deleteStudent(${s.id})">Delete</button></td>
+        </tr>`).join('');
+      teacherTable.innerHTML = db.teachers.map(t=>`<tr><td>${t.id}</td><td>${t.first} ${t.last}</td><td>${t.email}</td></tr>`).join('');
+      classTable.innerHTML = db.classes.map(c=>`<tr><td>${c.id}</td><td>${c.name}</td></tr>`).join('');
+      parentTable.innerHTML = db.parents.map(p=>`<tr><td>${p.id}</td><td>${p.first} ${p.last}</td><td>${p.phone}</td></tr>`).join('');
+      assessmentTable.innerHTML = db.assessments.map(a=>`<tr><td>${a.id}</td><td>${a.student}</td><td>${a.subject}</td><td>${a.score}/${a.max}</td></tr>`).join('');
+    }
+
+    function updateDashboard(){
+      countSchools.textContent = db.schools.length;
+      countStudents.textContent = db.students.length;
+      countTeachers.textContent = db.teachers.length;
+      countClasses.textContent = db.classes.length;
+    }
+
+    // Init
+    updateTables();
+    updateDashboard();
+  </script>
+</body>
+</html>
